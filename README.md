@@ -1,6 +1,6 @@
 # Anytime-Anywhere-NAS
 
-?? **Turn your existing Windows or Linux laptop into a simple, non-destructive NAS with one click.**
+**Turn your existing Windows or Linux laptop into a simple, non-destructive NAS with one click.**
 
 This is a desktop application built with C# and Avalonia UI that makes it incredibly easy to start a network share from your everyday computer without wiping your OS or buying new hardware.
 
@@ -33,7 +33,7 @@ Your app is just a user-friendly GUI that automatically configures and manages t
 
 ## Project Status
 
-?? **This project is currently in active development.** ??
+**This project is currently in active development.**
 
 ## Contributing
 
