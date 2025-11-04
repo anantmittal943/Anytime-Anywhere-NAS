@@ -15,13 +15,26 @@
 		<vm:MainWindowViewModel/>
 	</Design.DataContext>
 
-	<StackPanel Spacing="10" VerticalAlignment="Center" HorizontalAlignment="Center">
+	<StackPanel Spacing="10" VerticalAlignment="Center" HorizontalAlignment="Center" MinWidth="400">
 
-        <TextBlock Text="{Binding Header}" FontSize="20" />
+		<TextBlock Text="{Binding Header}" FontSize="16" HorizontalAlignment="Center"/>
+		<Button Content="Scan System" Command="{Binding ScanSystemCommand}" HorizontalAlignment="Stretch"/>
 
-        <Button Content="Scan System" Command="{Binding ScanSystemCommand}" />
+		<Separator Height="10" />
 
-    </StackPanel>
+		<TextBlock Text="NAS Status:" FontWeight="Bold" />
+		<TextBlock Text="{Binding NasStatus}" FontSize="16" HorizontalAlignment="Center" Margin="0,5,0,10"/>
+
+		<TextBlock Text="Shared Folder:" FontWeight="Bold" />
+		<TextBlock Text="{Binding SelectedFolderPath}" Background="#eee" Padding="5" />
+
+		<Button Name="SelectFolderButton" Content="1. Select Folder to Share" HorizontalAlignment="Stretch" Click="OnSelectFolderClick" />
+
+		<Button Content="2. Start NAS" Command="{Binding StartNasCommand}" HorizontalAlignment="Stretch" />
+
+		<Button Content="3. Stop NAS" Command="{Binding StopNasCommand}" HorizontalAlignment="Stretch" />
+
+	</StackPanel>
 
 
 </Window>
