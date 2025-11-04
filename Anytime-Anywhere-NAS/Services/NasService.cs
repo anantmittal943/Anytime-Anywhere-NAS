@@ -104,6 +104,57 @@ namespace Anytime_Anywhere_NAS.Services
 			return 0;
 		}
 
+		public async Task<string> DetectLinuxDistributionAsync()
+		{
+			Log.Information("Detecting Linux distribution");
+			
+			try
+			{
+				// Check /etc/os-release (most modern distros)
+				if (File.Exists("/etc/os-release"))
+				{
+					var osRelease = await File.ReadAllTextAsync("/etc/os-release");
+					var idMatch = Regex.Match(osRelease, @"^ID=(.+)$", RegexOptions.Multiline);
+					
+					if (idMatch.Success)
+					{
+						string distro = idMatch.Groups[1].Value.Trim().Trim('"').ToLower();
+						Log.Information("Detected Linux distribution: {Distro}", distro);
+						return distro;
+					}
+				}
+				
+				// Fallback to checking specific release files
+				if (File.Exists("/etc/debian_version"))
+				{
+					Log.Information("Detected Debian-based distribution");
+					return "debian";
+				}
+				if (File.Exists("/etc/redhat-release"))
+				{
+					Log.Information("Detected Red Hat-based distribution");
+					return "rhel";
+				}
+				if (File.Exists("/etc/arch-release"))
+				{
+					Log.Information("Detected Arch Linux");
+					return "arch";
+				}
+				if (File.Exists("/etc/SuSE-release"))
+				{
+					Log.Information("Detected SUSE Linux");
+					return "suse";
+				}
+			}
+			catch (Exception ex)
+			{
+				Log.Error(ex, "Error detecting Linux distribution");
+			}
+			
+			Log.Warning("Unable to detect Linux distribution, defaulting to 'unknown'");
+			return "unknown";
+		}
+
 		public async Task<ProcessResult> RunCommandAsync(string program, string args)
 		{
 			Log.Information("Running command: {Program} {Args}", program, args);
@@ -189,8 +240,12 @@ namespace Anytime_Anywhere_NAS.Services
 			
 			try
 			{
+				// Normalize path for Docker - convert backslashes to forward slashes for Windows
+				string dockerPath = storagePath.Replace("\\", "/");
+				
+				Log.Debug("Normalized path for Docker: {DockerPath}", dockerPath);
+				
 				string fileContent = $@"
-version: '3.8'
 services:
   samba:
     image: dperson/samba
@@ -199,7 +254,7 @@ services:
       - ""139:139""
       - ""445:445""
     volumes:
-      - ""{storagePath}:/share""
+      - ""{dockerPath}:/share""
     command: -s ""{shareName};/share;yes;no;no;all""
     restart: always
 ";
@@ -216,7 +271,7 @@ services:
 		public async Task<ProcessResult> StartNasAsync()
 		{
 			Log.Information("Starting NAS (docker-compose up)");
-			var result = await RunCommandAsync("docker-compose", "up -d");
+			var result = await RunCommandAsync("docker", "compose up -d");
 			
 			if (result.IsSuccess)
 			{
@@ -234,7 +289,7 @@ services:
 		public async Task<ProcessResult> StopNasAsync()
 		{
 			Log.Information("Stopping NAS (docker-compose down)");
-			var result = await RunCommandAsync("docker-compose", "down");
+			var result = await RunCommandAsync("docker", "compose down");
 			
 			if (result.IsSuccess)
 			{
@@ -247,6 +302,60 @@ services:
 			}
 			
 			return result;
+		}
+
+		public async Task<ProcessResult> InstallDockerAsync()
+		{
+			Log.Information("Starting Docker installation process");
+			
+			var platform = GetOperatingSystem();
+			
+			if (platform == OSPlatform.Windows)
+			{
+				return await InstallDockerOnWindowsAsync();
+			}
+			else
+			{
+				Log.Error("Automatic Docker installation only supported on Windows");
+				return new ProcessResult
+				{
+					ExitCode = -1,
+					Error = "Automatic installation only available on Windows. Please install Docker manually."
+				};
+			}
+		}
+
+		private async Task<ProcessResult> InstallDockerOnWindowsAsync()
+		{
+			Log.Information("Installing Docker Desktop on Windows");
+			
+			// Try using winget first (Windows 10+)
+			Log.Information("Attempting installation via winget");
+			var wingetResult = await RunCommandAsync("winget", "install -e --id Docker.DockerDesktop --accept-package-agreements --accept-source-agreements");
+			
+			if (wingetResult.IsSuccess)
+			{
+				Log.Information("Docker Desktop installed successfully via winget");
+				return wingetResult;
+			}
+			
+			Log.Warning("Winget installation failed, attempting chocolatey");
+			
+			// Try chocolatey as fallback
+			var chocoResult = await RunCommandAsync("choco", "install docker-desktop -y");
+			
+			if (chocoResult.IsSuccess)
+			{
+				Log.Information("Docker Desktop installed successfully via chocolatey");
+				return chocoResult;
+			}
+			
+			Log.Error("Failed to install Docker Desktop automatically");
+			return new ProcessResult
+			{
+				ExitCode = -1,
+				Error = "Automatic installation failed. Please download Docker Desktop from https://www.docker.com/products/docker-desktop and install it manually."
+			};
 		}
 	}
 }

@@ -15,24 +15,96 @@
 		<vm:MainWindowViewModel/>
 	</Design.DataContext>
 
-	<StackPanel Spacing="10" VerticalAlignment="Center" HorizontalAlignment="Center" MinWidth="400">
+	<StackPanel Spacing="10" VerticalAlignment="Center" HorizontalAlignment="Center" MinWidth="500" Margin="20">
 
-		<TextBlock Text="{Binding Header}" FontSize="16" HorizontalAlignment="Center"/>
-		<Button Content="Scan System" Command="{Binding ScanSystemCommand}" HorizontalAlignment="Stretch"/>
+		<TextBlock Text="{Binding Header}" FontSize="16" HorizontalAlignment="Center" FontWeight="Bold"/>
 
 		<Separator Height="10" />
 
 		<TextBlock Text="NAS Status:" FontWeight="Bold" />
 		<TextBlock Text="{Binding NasStatus}" FontSize="16" HorizontalAlignment="Center" Margin="0,5,0,10"/>
 
+		<!-- Docker Installation Section - Windows -->
+		<Border BorderBrush="#FF6B6B" BorderThickness="2" Padding="15" CornerRadius="5" 
+				IsVisible="{Binding !IsDockerInstalled}">
+			<StackPanel Spacing="10">
+				<TextBlock Text="?? Docker Required" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center"/>
+				
+				<TextBlock Text="Docker is required to run this NAS application." 
+						   TextWrapping="Wrap" HorizontalAlignment="Center"/>
+				
+				<!-- Windows Install Button -->
+				<Button Content="Install Docker Desktop (Windows)" 
+						Command="{Binding InstallDockerCommand}" 
+						HorizontalAlignment="Stretch" 
+						Background="#FF6B6B"
+						Foreground="White"
+						Padding="10"
+						IsVisible="{Binding IsWindows}" />
+				
+				<!-- Linux Instructions -->
+				<StackPanel Spacing="8" IsVisible="{Binding IsLinux}">
+					<TextBlock Text="Please install Docker using your system's package manager:" 
+							   FontWeight="Bold" TextWrapping="Wrap"/>
+					
+					<TextBlock TextWrapping="Wrap" Padding="10" Background="#F5F5F5">
+						<Run Text="Ubuntu/Debian:"/>
+						<LineBreak/>
+						<Run Text="sudo apt-get update" FontFamily="Consolas"/>
+						<LineBreak/>
+						<Run Text="sudo apt-get install docker.io docker-compose" FontFamily="Consolas"/>
+					</TextBlock>
+					
+					<TextBlock TextWrapping="Wrap" Padding="10" Background="#F5F5F5">
+						<Run Text="Fedora/RHEL/CentOS:"/>
+						<LineBreak/>
+						<Run Text="sudo dnf install docker docker-compose" FontFamily="Consolas"/>
+					</TextBlock>
+					
+					<TextBlock TextWrapping="Wrap" Padding="10" Background="#F5F5F5">
+						<Run Text="Arch/Manjaro:"/>
+						<LineBreak/>
+						<Run Text="sudo pacman -S docker docker-compose" FontFamily="Consolas"/>
+					</TextBlock>
+					
+					<TextBlock TextWrapping="Wrap" Padding="10" Background="#F5F5F5">
+						<Run Text="After installation, start Docker:"/>
+						<LineBreak/>
+						<Run Text="sudo systemctl start docker" FontFamily="Consolas"/>
+						<LineBreak/>
+						<Run Text="sudo systemctl enable docker" FontFamily="Consolas"/>
+					</TextBlock>
+					
+					<TextBlock Text="Then restart this application." 
+							   FontStyle="Italic" HorizontalAlignment="Center"/>
+				</StackPanel>
+			</StackPanel>
+		</Border>
+
+		<Separator Height="10" />
+
 		<TextBlock Text="Shared Folder:" FontWeight="Bold" />
 		<TextBlock Text="{Binding SelectedFolderPath}" Background="#eee" Padding="5" />
 
-		<Button Name="SelectFolderButton" Content="1. Select Folder to Share" HorizontalAlignment="Stretch" Click="OnSelectFolderClick" />
+		<Button Name="SelectFolderButton" 
+				Content="1. Select Folder to Share" 
+				HorizontalAlignment="Stretch" 
+				Click="OnSelectFolderClick" 
+				Padding="10"/>
 
-		<Button Content="2. Start NAS" Command="{Binding StartNasCommand}" HorizontalAlignment="Stretch" />
+		<Button Content="2. Start NAS" 
+				Command="{Binding StartNasCommand}" 
+				HorizontalAlignment="Stretch" 
+				Background="#4CAF50"
+				Foreground="White"
+				Padding="10"/>
 
-		<Button Content="3. Stop NAS" Command="{Binding StopNasCommand}" HorizontalAlignment="Stretch" />
+		<Button Content="3. Stop NAS" 
+				Command="{Binding StopNasCommand}" 
+				HorizontalAlignment="Stretch" 
+				Background="#F44336"
+				Foreground="White"
+				Padding="10"/>
 
 	</StackPanel>
 
