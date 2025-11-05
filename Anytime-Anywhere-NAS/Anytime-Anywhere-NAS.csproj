@@ -22,7 +22,6 @@
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="ReactiveUI" Version="22.2.1" />
     <PackageReference Include="ReactiveUI.Avalonia" Version="11.3.8" />
     <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />

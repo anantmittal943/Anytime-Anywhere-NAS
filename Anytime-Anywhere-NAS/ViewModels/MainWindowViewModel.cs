@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Anytime_Anywhere_NAS.ViewModels
 {
-	public partial class MainWindowViewModel : ViewModelBase
+	public class MainWindowViewModel : ViewModelBase
 	{
 		private string _header = "Loading system information...";
 		public string Header
@@ -212,7 +212,7 @@ namespace Anytime_Anywhere_NAS.ViewModels
 			{
 				NasStatus = "Starting... (Checking for Docker)";
 
-				var dockerCheckResult = await _nasService.CheckForDockerAsync();
+				var dockerCheckResult = await _nasService.CheckDockerRunningAsync();
 				bool dockerAvailable = dockerCheckResult.IsSuccess;
 				
 				if (!dockerAvailable)
@@ -244,7 +244,7 @@ namespace Anytime_Anywhere_NAS.ViewModels
 							
 							await Task.Delay(30000);
 							
-							dockerCheckResult = await _nasService.CheckForDockerAsync();
+							dockerCheckResult = await _nasService.CheckDockerRunningAsync();
 							dockerAvailable = dockerCheckResult.IsSuccess;
 							
 							if (!dockerAvailable)

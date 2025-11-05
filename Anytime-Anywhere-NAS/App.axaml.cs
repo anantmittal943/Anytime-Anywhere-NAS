@@ -29,7 +29,7 @@ namespace Anytime_Anywhere_NAS
 
                 // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
                 // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
-                DisableAvaloniaDataAnnotationValidation();
+                //DisableAvaloniaDataAnnotationValidation();
 
                 Log.Information("Creating main window");
                 desktop.MainWindow = new MainWindow
@@ -46,6 +46,7 @@ namespace Anytime_Anywhere_NAS
             base.OnFrameworkInitializationCompleted();
         }
 
+        /*
         private void DisableAvaloniaDataAnnotationValidation()
         {
             Log.Debug("Disabling Avalonia data annotation validation");
@@ -62,5 +63,6 @@ namespace Anytime_Anywhere_NAS
 
             Log.Debug("Removed {Count} data validation plugins", dataValidationPluginsToRemove.Length);
         }
+        */
     }
 }

@@ -110,7 +110,6 @@ namespace Anytime_Anywhere_NAS.Services
 			
 			try
 			{
-				// Check /etc/os-release (most modern distros)
 				if (File.Exists("/etc/os-release"))
 				{
 					var osRelease = await File.ReadAllTextAsync("/etc/os-release");
@@ -124,7 +123,6 @@ namespace Anytime_Anywhere_NAS.Services
 					}
 				}
 				
-				// Fallback to checking specific release files
 				if (File.Exists("/etc/debian_version"))
 				{
 					Log.Information("Detected Debian-based distribution");
@@ -222,13 +220,30 @@ namespace Anytime_Anywhere_NAS.Services
 			
 			if (result.IsSuccess)
 			{
-				Log.Information("Docker is installed and running. Version: {Output}", result.Output.Trim());
+				Log.Information("Docker is installed. Version: {Output}", result.Output.Trim());
 			}
 			else
 			{
-				Log.Warning("Docker is not installed or not running. Error: {Error}", result.Error);
+				Log.Warning("Docker is not installed. Error: {Error}", result.Error);
 			}
 			
+			return result;
+		}
+
+		public async Task<ProcessResult> CheckDockerRunningAsync()
+		{
+			Log.Information("Checking if Docker engine is running");
+			var result = await RunCommandAsync("docker", "ps");
+
+			if (result.IsSuccess)
+			{
+				Log.Information("Docker is running. Version: {Output}", result.Output.Trim());
+			}
+			else
+			{
+				Log.Warning("Docker is not running. Error: {Error}", result.Error);
+			}
+
 			return result;
 		}
 
@@ -239,7 +254,6 @@ namespace Anytime_Anywhere_NAS.Services
 			
 			try
 			{
-				// Normalize path for Docker - convert backslashes to forward slashes for Windows
 				string dockerPath = storagePath.Replace("\\", "/");
 				
 				Log.Debug("Normalized path for Docker: {DockerPath}", dockerPath);
@@ -328,7 +342,6 @@ services:
 		{
 			Log.Information("Installing Docker Desktop on Windows");
 			
-			// Try using winget first (Windows 10+)
 			Log.Information("Attempting installation via winget");
 			var wingetResult = await RunCommandAsync("winget", "install -e --id Docker.DockerDesktop --accept-package-agreements --accept-source-agreements");
 			
@@ -340,7 +353,6 @@ services:
 			
 			Log.Warning("Winget installation failed, attempting chocolatey");
 			
-			// Try chocolatey as fallback
 			var chocoResult = await RunCommandAsync("choco", "install docker-desktop -y");
 			
 			if (chocoResult.IsSuccess)
