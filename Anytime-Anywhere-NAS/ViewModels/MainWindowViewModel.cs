@@ -2,6 +2,7 @@
 using ReactiveUI;
 using Serilog;
 using System;
+using System.IO;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Runtime.InteropServices;
@@ -82,7 +83,6 @@ namespace Anytime_Anywhere_NAS.ViewModels
 			Log.Information("Initializing MainWindowViewModel");
 			_nasService = new NasService();
 
-			// Detect OS platform
 			var platform = _nasService.GetOperatingSystem();
 			IsLinux = platform == OSPlatform.Linux;
 			IsWindows = platform == OSPlatform.Windows;
@@ -118,7 +118,6 @@ namespace Anytime_Anywhere_NAS.ViewModels
 				Header = $"OS: {info.OS} | Cores: {info.TotalCores} | RAM: {info.TotalRamGB} GB";
 				Log.Information("System information loaded successfully on startup");
 
-				// Detect Linux distribution if on Linux
 				if (IsLinux)
 				{
 					LinuxDistro = await _nasService.DetectLinuxDistributionAsync();
@@ -137,7 +136,8 @@ namespace Anytime_Anywhere_NAS.ViewModels
 			Log.Information("Checking Docker status on startup");
 			try
 			{
-				IsDockerInstalled = await _nasService.CheckForDockerAsync();
+				var dockerCheckResult = await _nasService.CheckForDockerAsync();
+				IsDockerInstalled = dockerCheckResult.IsSuccess;
 				
 				if (IsDockerInstalled)
 				{
@@ -145,7 +145,18 @@ namespace Anytime_Anywhere_NAS.ViewModels
 				}
 				else
 				{
-					if (IsWindows)
+					if (IsLinux && dockerCheckResult.Error.Contains("permission denied", StringComparison.OrdinalIgnoreCase))
+					{
+						NasStatus = "Docker permission denied. Run: sudo usermod -aG docker $USER (then logout/login)";
+						Log.Error("--- DOCKER PERMISSION ERROR DETECTED ---");
+						Log.Error("Docker is installed but you don't have permission to use it.");
+						Log.Error("HOW TO FIX:");
+						Log.Error("1. Open a terminal and run: sudo usermod -aG docker $USER");
+						Log.Error("2. Log out of your Linux session and log back in (or reboot).");
+						Log.Error("3. Restart this application.");
+						Log.Error("----------------------------------------");
+					}
+					else if (IsWindows)
 					{
 						NasStatus = "Docker not detected. Click 'Install Docker' to proceed.";
 					}
@@ -199,30 +210,85 @@ namespace Anytime_Anywhere_NAS.ViewModels
 			Log.Information("User initiated NAS start");
 			try
 			{
-				NasStatus = "Starting...";
+				NasStatus = "Starting... (Checking for Docker)";
 
-				// Re-check Docker status before starting
-				bool dockerAvailable = await _nasService.CheckForDockerAsync();
+				var dockerCheckResult = await _nasService.CheckForDockerAsync();
+				bool dockerAvailable = dockerCheckResult.IsSuccess;
+				
 				if (!dockerAvailable)
 				{
-					IsDockerInstalled = false;
+					if (IsLinux && dockerCheckResult.Error.Contains("permission denied", StringComparison.OrdinalIgnoreCase))
+					{
+						Log.Error("--- DOCKER PERMISSION ERROR DETECTED ---");
+						Log.Error("Docker is installed but you don't have permission to use it.");
+						Log.Error("HOW TO FIX:");
+						Log.Error("1. Open a terminal and run: sudo usermod -aG docker $USER");
+						Log.Error("2. Log out of your Linux session completely and log back in (or reboot).");
+						Log.Error("3. Restart this application.");
+						Log.Error("The group changes only take effect after you log back in!");
+						Log.Error("----------------------------------------");
+						
+						NasStatus = "Error: Docker permission denied. Check logs for fix instructions.";
+						IsDockerInstalled = false;
+						return;
+					}
 					
 					if (IsWindows)
 					{
-						NasStatus = "Error: Docker is not running! Click 'Install Docker' to install it.";
+						Log.Warning("Docker engine is not running. Attempting to start Docker Desktop...");
+						NasStatus = "Docker not running... Starting Docker Desktop. Please wait 30 seconds.";
+						
+						try
+						{
+							_nasService.StartDockerDesktop();
+							
+							await Task.Delay(30000);
+							
+							dockerCheckResult = await _nasService.CheckForDockerAsync();
+							dockerAvailable = dockerCheckResult.IsSuccess;
+							
+							if (!dockerAvailable)
+							{
+								NasStatus = "Error: Docker Desktop started but failed to connect. Please check Docker Desktop.";
+								Log.Error("Failed to connect to Docker after starting Docker Desktop");
+								return;
+							}
+							
+							Log.Information("Docker Desktop started successfully and engine is now running");
+							NasStatus = "Docker started successfully. Continuing...";
+						}
+						catch (FileNotFoundException)
+						{
+							NasStatus = "Error: Docker Desktop is not installed. Please install it first.";
+							Log.Error("Docker Desktop executable not found");
+							IsDockerInstalled = false;
+							return;
+						}
+						catch (Exception ex)
+						{
+							NasStatus = $"Error: Failed to start Docker Desktop: {ex.Message}";
+							Log.Error(ex, "Failed to start Docker Desktop");
+							return;
+						}
 					}
 					else if (IsLinux)
 					{
-						NasStatus = "Error: Docker is not running! Please install and start Docker.";
+						NasStatus = "Error: Docker is not running! Please start Docker service: sudo systemctl start docker";
+						Log.Warning("Cannot start NAS: Docker service is not running on Linux");
+						IsDockerInstalled = false;
+						return;
 					}
 					else
 					{
-						NasStatus = "Error: Docker is not running!";
+						NasStatus = "Error: Docker is not installed or not running!";
+						Log.Warning("Cannot start NAS: Docker is not available");
+						IsDockerInstalled = false;
+						return;
 					}
-					
-					Log.Warning("Cannot start NAS: Docker is not available");
-					return;
 				}
+
+				Log.Information("Docker is running. Proceeding with NAS start.");
+				NasStatus = "Docker OK. Starting NAS...";
 
 				if (SelectedFolderPath == "No folder selected.")
 				{
@@ -245,8 +311,19 @@ namespace Anytime_Anywhere_NAS.ViewModels
 				}
 				else
 				{
-					NasStatus = $"Error: {result.Error}";
-					Log.Error("NAS start failed with error: {Error}", result.Error);
+					if (IsLinux && result.Error.Contains("permission denied", StringComparison.OrdinalIgnoreCase))
+					{
+						Log.Error("--- DOCKER PERMISSION ERROR ---");
+						Log.Error("Run: sudo usermod -aG docker $USER");
+						Log.Error("Then logout and login again.");
+						Log.Error("-------------------------------");
+						NasStatus = "Error: Docker permission denied. See logs.";
+					}
+					else
+					{
+						NasStatus = $"Error: {result.Error}";
+						Log.Error("NAS start failed with error: {Error}", result.Error);
+					}
 				}
 			}
 			catch (Exception ex)

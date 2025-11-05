@@ -215,22 +215,21 @@ namespace Anytime_Anywhere_NAS.Services
 			}
 		}
 
-		public async Task<bool> CheckForDockerAsync()
+		public async Task<ProcessResult> CheckForDockerAsync()
 		{
 			Log.Information("Checking for Docker installation");
 			var result = await RunCommandAsync("docker", "--version");
-			bool isInstalled = result.IsSuccess;
 			
-			if (isInstalled)
+			if (result.IsSuccess)
 			{
 				Log.Information("Docker is installed and running. Version: {Output}", result.Output.Trim());
 			}
 			else
 			{
-				Log.Warning("Docker is not installed or not running");
+				Log.Warning("Docker is not installed or not running. Error: {Error}", result.Error);
 			}
 			
-			return isInstalled;
+			return result;
 		}
 
 		public async Task WriteComposeFileAsync(string storagePath, string shareName)
@@ -356,6 +355,37 @@ services:
 				ExitCode = -1,
 				Error = "Automatic installation failed. Please download Docker Desktop from https://www.docker.com/products/docker-desktop and install it manually."
 			};
+		}
+
+		public void StartDockerDesktop()
+		{
+			Log.Information("Attempting to start Docker Desktop application...");
+			
+			string dockerExePath = @"C:\Program Files\Docker\Docker\Docker Desktop.exe";
+
+			if (!File.Exists(dockerExePath))
+			{
+				Log.Error("Could not find Docker Desktop.exe at the standard path: {Path}", dockerExePath);
+				throw new FileNotFoundException("Docker Desktop executable not found. Please ensure Docker Desktop is installed.");
+			}
+
+			try
+			{
+				var startInfo = new ProcessStartInfo
+				{
+					FileName = dockerExePath,
+					UseShellExecute = true,
+					WindowStyle = ProcessWindowStyle.Hidden
+				};
+				
+				Process.Start(startInfo);
+				Log.Information("Docker Desktop application started successfully");
+			}
+			catch (Exception ex)
+			{
+				Log.Error(ex, "Failed to start Docker Desktop application");
+				throw;
+			}
 		}
 	}
 }

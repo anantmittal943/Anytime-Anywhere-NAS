@@ -22,7 +22,7 @@
 		<Separator Height="10" />
 
 		<TextBlock Text="NAS Status:" FontWeight="Bold" />
-		<TextBlock Text="{Binding NasStatus}" FontSize="16" HorizontalAlignment="Center" Margin="0,5,0,10"/>
+		<TextBlock Text="{Binding NasStatus}" FontSize="16" HorizontalAlignment="Center" Margin="0,5,0,10" TextWrapping="Wrap"/>
 
 		<!-- Docker Installation Section - Windows -->
 		<Border BorderBrush="#FF6B6B" BorderThickness="2" Padding="15" CornerRadius="5" 
@@ -74,6 +74,18 @@
 						<LineBreak/>
 						<Run Text="sudo systemctl enable docker" FontFamily="Consolas"/>
 					</TextBlock>
+					
+					<Border BorderBrush="#FFA500" BorderThickness="2" Padding="10" Background="#FFF8DC">
+						<StackPanel Spacing="5">
+							<TextBlock Text="?? IMPORTANT: Add Your User to Docker Group" 
+									   FontWeight="Bold" TextWrapping="Wrap"/>
+							<TextBlock TextWrapping="Wrap" FontFamily="Consolas" Background="#F0F0F0" Padding="5">
+								<Run Text="sudo usermod -aG docker $USER"/>
+							</TextBlock>
+							<TextBlock Text="After running this command, you MUST log out and log back in (or reboot) for the changes to take effect!" 
+									   FontWeight="Bold" Foreground="#D32F2F" TextWrapping="Wrap"/>
+						</StackPanel>
+					</Border>
 					
 					<TextBlock Text="Then restart this application." 
 							   FontStyle="Italic" HorizontalAlignment="Center"/>
