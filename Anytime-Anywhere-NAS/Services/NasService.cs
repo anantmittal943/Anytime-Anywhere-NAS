@@ -268,9 +268,9 @@ services:
       - ""445:445""
     volumes:
       - ""{dockerPath}:/share""
-    command: -s ""{shareName};/share;yes;no;no;all""
+    command: -s ""{shareName};/share;yes;no;yes;all""
     restart: always
-";
+"; // update the rules and access for the nas
 				await File.WriteAllTextAsync("docker-compose.yml", fileContent);
 				Log.Information("docker-compose.yml file written successfully");
 			}
