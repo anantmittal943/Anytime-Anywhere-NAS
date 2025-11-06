@@ -96,7 +96,7 @@
 		<Separator Height="10" />
 
 		<TextBlock Text="Shared Folder:" FontWeight="Bold" />
-		<TextBlock Text="{Binding SelectedFolderPath}" Background="#eee" Padding="5" />
+		<TextBlock Text="{Binding SelectedFolderPath}" Padding="5" />
 
 		<Button Name="SelectFolderButton" 
 				Content="1. Select Folder to Share" 
