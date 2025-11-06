@@ -3,122 +3,336 @@
 		xmlns:vm="using:Anytime_Anywhere_NAS.ViewModels"
 		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-		mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+		mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
 		x:Class="Anytime_Anywhere_NAS.Views.MainWindow"
 		x:DataType="vm:MainWindowViewModel"
 		Icon="/Assets/avalonia-logo.ico"
-		Title="Anytime_Anywhere_NAS">
+		Title="Anytime Anywhere NAS"
+		Width="900" Height="700"
+		MinWidth="700" MinHeight="600"
+		Background="#F5F7FA"
+		FontFamily="Segoe UI, Arial, sans-serif">
 
 	<Design.DataContext>
-		<!-- This only sets the DataContext for the previewer in an IDE,
-		to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
 		<vm:MainWindowViewModel/>
 	</Design.DataContext>
 
-	<StackPanel Spacing="10" VerticalAlignment="Center" HorizontalAlignment="Center" MinWidth="500" Margin="20">
+	<Window.Styles>
+		<Style Selector="Button.primary">
+			<Setter Property="Background" Value="#4CAF50"/>
+			<Setter Property="Foreground" Value="White"/>
+			<Setter Property="Padding" Value="15,12"/>
+			<Setter Property="CornerRadius" Value="8"/>
+			<Setter Property="FontWeight" Value="SemiBold"/>
+			<Setter Property="FontSize" Value="14"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="Cursor" Value="Hand"/>
+		</Style>
+		
+		<Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#45A049"/>
+		</Style>
+		
+		<Style Selector="Button.primary:disabled /template/ ContentPresenter">
+			<Setter Property="Background" Value="#A5D6A7"/>
+			<Setter Property="Opacity" Value="0.6"/>
+		</Style>
+		
+		<Style Selector="Button.danger">
+			<Setter Property="Background" Value="#F44336"/>
+			<Setter Property="Foreground" Value="White"/>
+			<Setter Property="Padding" Value="15,12"/>
+			<Setter Property="CornerRadius" Value="8"/>
+			<Setter Property="FontWeight" Value="SemiBold"/>
+			<Setter Property="FontSize" Value="14"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="Cursor" Value="Hand"/>
+		</Style>
+		
+		<Style Selector="Button.danger:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#DA190B"/>
+		</Style>
+		
+		<Style Selector="Button.danger:disabled /template/ ContentPresenter">
+			<Setter Property="Background" Value="#EF9A9A"/>
+			<Setter Property="Opacity" Value="0.6"/>
+		</Style>
+		
+		<Style Selector="Button.secondary">
+			<Setter Property="Background" Value="#2196F3"/>
+			<Setter Property="Foreground" Value="White"/>
+			<Setter Property="Padding" Value="15,12"/>
+			<Setter Property="CornerRadius" Value="8"/>
+			<Setter Property="FontWeight" Value="SemiBold"/>
+			<Setter Property="FontSize" Value="14"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="Cursor" Value="Hand"/>
+		</Style>
+		
+		<Style Selector="Button.secondary:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#0B7DDA"/>
+		</Style>
+		
+		<Style Selector="Button.secondary:disabled /template/ ContentPresenter">
+			<Setter Property="Background" Value="#90CAF9"/>
+			<Setter Property="Opacity" Value="0.6"/>
+		</Style>
+		
+		<Style Selector="Button.warning">
+			<Setter Property="Background" Value="#FF9800"/>
+			<Setter Property="Foreground" Value="White"/>
+			<Setter Property="Padding" Value="15,12"/>
+			<Setter Property="CornerRadius" Value="8"/>
+			<Setter Property="FontWeight" Value="SemiBold"/>
+			<Setter Property="FontSize" Value="14"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="Cursor" Value="Hand"/>
+		</Style>
+		
+		<Style Selector="Button.warning:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#F57C00"/>
+		</Style>
+		
+		<Style Selector="Button.warning:disabled /template/ ContentPresenter">
+			<Setter Property="Background" Value="#FFCC80"/>
+			<Setter Property="Opacity" Value="0.6"/>
+		</Style>
+		
+		<Style Selector="Border.card">
+			<Setter Property="Background" Value="White"/>
+			<Setter Property="CornerRadius" Value="12"/>
+			<Setter Property="Padding" Value="20"/>
+			<Setter Property="BoxShadow" Value="0 2 8 0 #10000000"/>
+		</Style>
+		
+		<Style Selector="TextBlock.title">
+			<Setter Property="FontSize" Value="24"/>
+			<Setter Property="FontWeight" Value="Bold"/>
+			<Setter Property="Foreground" Value="#1A1A1A"/>
+		</Style>
+		
+		<Style Selector="TextBlock.subtitle">
+			<Setter Property="FontSize" Value="14"/>
+			<Setter Property="Foreground" Value="#666666"/>
+		</Style>
+		
+		<Style Selector="TextBlock.label">
+			<Setter Property="FontSize" Value="13"/>
+			<Setter Property="FontWeight" Value="SemiBold"/>
+			<Setter Property="Foreground" Value="#333333"/>
+			<Setter Property="Margin" Value="0,0,0,8"/>
+		</Style>
+	</Window.Styles>
 
-		<TextBlock Text="{Binding Header}" FontSize="16" HorizontalAlignment="Center" FontWeight="Bold"/>
+	<ScrollViewer>
+		<StackPanel Spacing="20" Margin="40" MaxWidth="800">
 
-		<Separator Height="10" />
-
-		<TextBlock Text="NAS Status:" FontWeight="Bold" />
-		<TextBlock Text="{Binding NasStatus}" FontSize="16" HorizontalAlignment="Center" Margin="0,5,0,10" TextWrapping="Wrap"/>
-
-		<!-- Docker Installation Section - Windows -->
-		<Border BorderBrush="#FF6B6B" BorderThickness="2" Padding="15" CornerRadius="5" 
-				IsVisible="{Binding !IsDockerInstalled}">
-			<StackPanel Spacing="10">
-				<TextBlock Text="?? Docker Required" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center"/>
-				
-				<TextBlock Text="Docker is required to run this NAS application." 
-						   TextWrapping="Wrap" HorizontalAlignment="Center"/>
-				
-				<!-- Windows Install Button -->
-				<Button Content="Install Docker Desktop (Windows)" 
-						Command="{Binding InstallDockerCommand}" 
-						HorizontalAlignment="Stretch" 
-						Background="#FF6B6B"
-						Foreground="White"
-						Padding="10"
-						IsVisible="{Binding IsWindows}" />
-				
-				<!-- Linux Instructions -->
-				<StackPanel Spacing="8" IsVisible="{Binding IsLinux}">
-					<TextBlock Text="Please install Docker using your system's package manager:" 
-							   FontWeight="Bold" TextWrapping="Wrap"/>
-					
-					<TextBlock TextWrapping="Wrap" Padding="10" Background="#F5F5F5">
-						<Run Text="Ubuntu/Debian:"/>
-						<LineBreak/>
-						<Run Text="sudo apt-get update" FontFamily="Consolas"/>
-						<LineBreak/>
-						<Run Text="sudo apt-get install docker.io docker-compose" FontFamily="Consolas"/>
-					</TextBlock>
-					
-					<TextBlock TextWrapping="Wrap" Padding="10" Background="#F5F5F5">
-						<Run Text="Fedora/RHEL/CentOS:"/>
-						<LineBreak/>
-						<Run Text="sudo dnf install docker docker-compose" FontFamily="Consolas"/>
-					</TextBlock>
-					
-					<TextBlock TextWrapping="Wrap" Padding="10" Background="#F5F5F5">
-						<Run Text="Arch/Manjaro:"/>
-						<LineBreak/>
-						<Run Text="sudo pacman -S docker docker-compose" FontFamily="Consolas"/>
-					</TextBlock>
-					
-					<TextBlock TextWrapping="Wrap" Padding="10" Background="#F5F5F5">
-						<Run Text="After installation, start Docker:"/>
-						<LineBreak/>
-						<Run Text="sudo systemctl start docker" FontFamily="Consolas"/>
-						<LineBreak/>
-						<Run Text="sudo systemctl enable docker" FontFamily="Consolas"/>
-					</TextBlock>
-					
-					<Border BorderBrush="#FFA500" BorderThickness="2" Padding="10" Background="#FFF8DC">
-						<StackPanel Spacing="5">
-							<TextBlock Text="?? IMPORTANT: Add Your User to Docker Group" 
-									   FontWeight="Bold" TextWrapping="Wrap"/>
-							<TextBlock TextWrapping="Wrap" FontFamily="Consolas" Background="#F0F0F0" Padding="5">
-								<Run Text="sudo usermod -aG docker $USER"/>
-							</TextBlock>
-							<TextBlock Text="After running this command, you MUST log out and log back in (or reboot) for the changes to take effect!" 
-									   FontWeight="Bold" Foreground="#D32F2F" TextWrapping="Wrap"/>
-						</StackPanel>
-					</Border>
-					
-					<TextBlock Text="Then restart this application." 
-							   FontStyle="Italic" HorizontalAlignment="Center"/>
+			<!-- Header Section -->
+			<Border Classes="card">
+				<StackPanel Spacing="8">
+					<TextBlock Text="Anytime Anywhere NAS" Classes="title" HorizontalAlignment="Center"/>
+					<TextBlock Text="{Binding Header}" 
+							   Classes="subtitle" 
+							   HorizontalAlignment="Center"
+							TextWrapping="Wrap"/>
 				</StackPanel>
-			</StackPanel>
-		</Border>
+			</Border>
 
-		<Separator Height="10" />
+			<!-- Status Card -->
+			<Border Classes="card">
+				<StackPanel Spacing="12">
+					<TextBlock Text="System Status" Classes="label"/>
+					<Border Background="#F0F4F8" 
+							CornerRadius="8" 
+							Padding="16">
+						<TextBlock Text="{Binding NasStatus}" 
+								   FontSize="14"
+								   TextWrapping="Wrap"
+								   Foreground="#1A1A1A"/>
+					</Border>
+				</StackPanel>
+			</Border>
 
-		<TextBlock Text="Shared Folder:" FontWeight="Bold" />
-		<TextBlock Text="{Binding SelectedFolderPath}" Padding="5" />
+			<!-- Docker Installation Section -->
+			<Border Classes="card"
+					BorderBrush="#FF6B6B" 
+					BorderThickness="2"
+					IsVisible="{Binding !IsDockerInstalled}">
+				<StackPanel Spacing="16">
+					<StackPanel Spacing="8">
+						<TextBlock Text="? Docker Required" 
+								   FontSize="20" 
+								   FontWeight="Bold" 
+								   HorizontalAlignment="Center"
+								 Foreground="#FF6B6B"/>
+						<TextBlock Text="Docker is required to run this NAS application." 
+								   TextWrapping="Wrap" 
+								   HorizontalAlignment="Center"
+								   Foreground="#666666"/>
+					</StackPanel>
+					
+					<!-- Windows Install Button -->
+					<Button Content="Install Docker Desktop" 
+							Command="{Binding InstallDockerCommand}" 
+							HorizontalAlignment="Stretch" 
+							Classes="warning"
+							IsVisible="{Binding IsWindows}" />
+					
+					<!-- Linux Instructions -->
+					<StackPanel Spacing="12" IsVisible="{Binding IsLinux}">
+						<TextBlock Text="Installation Instructions" 
+								   FontWeight="Bold" 
+								   FontSize="16"
+								   Foreground="#333333"
+								   TextWrapping="Wrap"/>
+						
+						<Border Background="#E3F2FD" CornerRadius="8" Padding="16">
+							<StackPanel Spacing="8">
+								<TextBlock Text="Ubuntu/Debian:" FontWeight="SemiBold" Foreground="#1976D2"/>
+								<Border Background="White" CornerRadius="4" Padding="12">
+									<TextBlock FontFamily="Consolas" FontSize="12">
+										<Run Text="sudo apt-get update"/>
+										<LineBreak/>
+										<Run Text="sudo apt-get install docker.io docker-compose"/>
+									</TextBlock>
+								</Border>
+							</StackPanel>
+						</Border>
+						
+						<Border Background="#FFF3E0" CornerRadius="8" Padding="16">
+							<StackPanel Spacing="8">
+								<TextBlock Text="Fedora/RHEL/CentOS:" FontWeight="SemiBold" Foreground="#F57C00"/>
+								<Border Background="White" CornerRadius="4" Padding="12">
+									<TextBlock Text="sudo dnf install docker docker-compose" 
+											   FontFamily="Consolas" 
+											   FontSize="12"/>
+								</Border>
+							</StackPanel>
+						</Border>
+						
+						<Border Background="#E8F5E9" CornerRadius="8" Padding="16">
+							<StackPanel Spacing="8">
+								<TextBlock Text="Arch/Manjaro:" FontWeight="SemiBold" Foreground="#388E3C"/>
+								<Border Background="White" CornerRadius="4" Padding="12">
+									<TextBlock Text="sudo pacman -S docker docker-compose" 
+											   FontFamily="Consolas" 
+											   FontSize="12"/>
+								</Border>
+							</StackPanel>
+						</Border>
+						
+						<Border Background="#F3E5F5" CornerRadius="8" Padding="16">
+							<StackPanel Spacing="8">
+								<TextBlock Text="Start Docker Service" FontWeight="SemiBold" Foreground="#7B1FA2"/>
+								<Border Background="White" CornerRadius="4" Padding="12">
+									<TextBlock FontFamily="Consolas" FontSize="12">
+										<Run Text="sudo systemctl start docker"/>
+										<LineBreak/>
+										<Run Text="sudo systemctl enable docker"/>
+									</TextBlock>
+								</Border>
+							</StackPanel>
+						</Border>
+						
+						<Border BorderBrush="#FFA726" 
+								BorderThickness="2" 
+								CornerRadius="8" 
+								Padding="16" 
+								Background="#FFF8E1">
+							<StackPanel Spacing="10">
+								<TextBlock Text="IMPORTANT: Add User to Docker Group" 
+										   FontWeight="Bold" 
+										   FontSize="15"
+										   Foreground="#E65100"
+										   TextWrapping="Wrap"/>
+								<Border Background="White" CornerRadius="4" Padding="12">
+									<TextBlock Text="sudo usermod -aG docker $USER" 
+											   FontFamily="Consolas" 
+											   FontSize="13"
+											   FontWeight="SemiBold"
+											   Foreground="#E65100"/>
+								</Border>
+								<TextBlock Text="After running this command, you MUST log out and log back in (or reboot) for the changes to take effect!" 
+										   FontWeight="SemiBold" 
+										   Foreground="#D84315" 
+										   TextWrapping="Wrap"
+										   FontSize="13"/>
+							</StackPanel>
+						</Border>
+						
+						<TextBlock Text="Then restart this application" 
+								   FontStyle="Italic" 
+								   HorizontalAlignment="Center"
+								   Foreground="#666666"
+								   FontSize="13"/>
+					</StackPanel>
+				</StackPanel>
+			</Border>
 
-		<Button Name="SelectFolderButton" 
-				Content="1. Select Folder to Share" 
-				HorizontalAlignment="Stretch" 
-				Click="OnSelectFolderClick" 
-				Padding="10"/>
+			<!-- NAS Configuration Card -->
+			<Border Classes="card">
+				<StackPanel Spacing="16">
+					<TextBlock Text="NAS Configuration" 
+							   FontSize="18" 
+							   FontWeight="Bold"
+							   Foreground="#1A1A1A"/>
+					
+					<!-- Folder Selection -->
+					<StackPanel Spacing="10">
+						<TextBlock Text="Shared Folder" Classes="label"/>
+						<Border Background="#F0F4F8" 
+								CornerRadius="8" 
+								Padding="14"
+								BorderBrush="#E0E0E0"
+								BorderThickness="1">
+							<TextBlock Text="{Binding SelectedFolderPath}" 
+									   FontFamily="Consolas"
+									   FontSize="13"
+									   Foreground="#333333"
+									   TextWrapping="Wrap"/>
+						</Border>
+						
+						<Button Name="SelectFolderButton" 
+								Content="Select Folder to Share" 
+								HorizontalAlignment="Stretch" 
+								Click="OnSelectFolderClick" 
+								Classes="secondary"/>
+					</StackPanel>
+				</StackPanel>
+			</Border>
 
-		<Button Content="2. Start NAS" 
-				Command="{Binding StartNasCommand}" 
-				HorizontalAlignment="Stretch" 
-				Background="#4CAF50"
-				Foreground="White"
-				Padding="10"/>
+			<!-- Control Buttons -->
+			<Border Classes="card">
+				<StackPanel Spacing="16">
+					<TextBlock Text="Controls" 
+							   FontSize="18" 
+							   FontWeight="Bold"
+							   Foreground="#1A1A1A"/>
+					
+					<Grid ColumnDefinitions="*,12,*" RowDefinitions="Auto">
+						<Button Content="Start NAS" 
+								Command="{Binding StartNasCommand}" 
+								HorizontalAlignment="Stretch"
+								Grid.Column="0"
+								Classes="primary"/>
 
-		<Button Content="3. Stop NAS" 
-				Command="{Binding StopNasCommand}" 
-				HorizontalAlignment="Stretch" 
-				Background="#F44336"
-				Foreground="White"
-				Padding="10"/>
+						<Button Content="Stop NAS" 
+								Command="{Binding StopNasCommand}" 
+								HorizontalAlignment="Stretch"
+								Grid.Column="2"
+								Classes="danger"/>
+					</Grid>
+				</StackPanel>
+			</Border>
 
-	</StackPanel>
+			<!-- Footer -->
+			<TextBlock Text="Made with love for easy file sharing" 
+					   HorizontalAlignment="Center"
+					   FontSize="12"
+					   Foreground="#999999"
+					   Margin="0,10,0,20"/>
 
+		</StackPanel>
+	</ScrollViewer>
 
 </Window>
