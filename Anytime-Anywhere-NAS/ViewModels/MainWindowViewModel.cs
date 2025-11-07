@@ -1,4 +1,5 @@
-﻿using Anytime_Anywhere_NAS.Services;
+﻿using Anytime_Anywhere_NAS.Models;
+using Anytime_Anywhere_NAS.Services;
 using ReactiveUI;
 using Serilog;
 using System;
@@ -74,6 +75,8 @@ namespace Anytime_Anywhere_NAS.ViewModels
 
 		private NasService _nasService;
 
+		private SystemInfo _systemInfo;
+
 		public ReactiveCommand<Unit, Unit> InstallDockerCommand { get; }
 		public ReactiveCommand<Unit, Unit> StartNasCommand { get; }
 		public ReactiveCommand<Unit, Unit> StopNasCommand { get; }
@@ -82,6 +85,7 @@ namespace Anytime_Anywhere_NAS.ViewModels
 		{
 			Log.Information("Initializing MainWindowViewModel");
 			_nasService = new NasService();
+			_systemInfo = new SystemInfo();
 
 			var platform = _nasService.GetOperatingSystem();
 			IsLinux = platform == OSPlatform.Linux;
@@ -114,8 +118,8 @@ namespace Anytime_Anywhere_NAS.ViewModels
 			Log.Information("Loading system information on startup");
 			try
 			{
-				var info = await Task.Run(() => _nasService.GetSystemInfo());
-				Header = $"OS: {info.OS} | Cores: {info.TotalCores} | RAM: {info.TotalRamGB} GB";
+				_systemInfo = await Task.Run(() => _nasService.GetSystemInfo());
+				Header = $"OS: {_systemInfo.OS} | Cores: {_systemInfo.TotalCores} | RAM: {_systemInfo.TotalRamGB} GB";
 				Log.Information("System information loaded successfully on startup");
 
 				if (IsLinux)
@@ -297,8 +301,14 @@ namespace Anytime_Anywhere_NAS.ViewModels
 					return;
 				}
 
+				Log.Information("Calculating resource limits...");
+				double cpuLimit = Math.Min(2.0, Math.Max(0.5, _systemInfo.TotalCores * 0.25));
+				double memoryLimitGB = Math.Min(3.0, Math.Max(1.0, _systemInfo.TotalRamGB * 0.25));
+
+				Log.Information("Allocating {CpuLimit:0.0} CPUs and {MemoryLimitGB:0.0}GB RAM", cpuLimit, memoryLimitGB);
+
 				Log.Information("Creating docker-compose configuration");
-				await _nasService.WriteComposeFileAsync(SelectedFolderPath, "MyNasShare");
+				await _nasService.WriteComposeFileAsync(SelectedFolderPath, "MyNasShare", cpuLimit, memoryLimitGB);
 
 				Log.Information("Starting Docker containers");
 				var result = await _nasService.StartNasAsync();

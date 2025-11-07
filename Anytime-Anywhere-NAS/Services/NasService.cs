@@ -26,7 +26,7 @@ namespace Anytime_Anywhere_NAS.Services
 					TotalCores = Environment.ProcessorCount,
 					TotalRamGB = GetTotalMemoryGB(),
 				};
-				Log.Information("System info retrieved: OS={OS}, Cores={Cores}, RAM={RAM}GB", 
+				Log.Information("System info retrieved: OS={OS}, Cores={Cores}, RAM={RAM}GB",
 					systemInfo.OS, systemInfo.TotalCores, systemInfo.TotalRamGB);
 				return systemInfo;
 			}
@@ -107,14 +107,14 @@ namespace Anytime_Anywhere_NAS.Services
 		public async Task<string> DetectLinuxDistributionAsync()
 		{
 			Log.Information("Detecting Linux distribution");
-			
+
 			try
 			{
 				if (File.Exists("/etc/os-release"))
 				{
 					var osRelease = await File.ReadAllTextAsync("/etc/os-release");
 					var idMatch = Regex.Match(osRelease, @"^ID=(.+)$", RegexOptions.Multiline);
-					
+
 					if (idMatch.Success)
 					{
 						string distro = idMatch.Groups[1].Value.Trim().Trim('"').ToLower();
@@ -122,7 +122,7 @@ namespace Anytime_Anywhere_NAS.Services
 						return distro;
 					}
 				}
-				
+
 				if (File.Exists("/etc/debian_version"))
 				{
 					Log.Information("Detected Debian-based distribution");
@@ -148,7 +148,7 @@ namespace Anytime_Anywhere_NAS.Services
 			{
 				Log.Error(ex, "Error detecting Linux distribution");
 			}
-			
+
 			Log.Warning("Unable to detect Linux distribution, defaulting to 'unknown'");
 			return "unknown";
 		}
@@ -156,7 +156,7 @@ namespace Anytime_Anywhere_NAS.Services
 		public async Task<ProcessResult> RunCommandAsync(string program, string args)
 		{
 			Log.Information("Running command: {Program} {Args}", program, args);
-			
+
 			var startInfo = new ProcessStartInfo()
 			{
 				FileName = program,
@@ -195,7 +195,7 @@ namespace Anytime_Anywhere_NAS.Services
 				}
 				else
 				{
-					Log.Warning("Command failed with exit code {ExitCode}: {Program} {Args}", 
+					Log.Warning("Command failed with exit code {ExitCode}: {Program} {Args}",
 						result.ExitCode, program, args);
 					Log.Debug("Command error: {Error}", error);
 				}
@@ -205,10 +205,10 @@ namespace Anytime_Anywhere_NAS.Services
 			catch (Exception ex)
 			{
 				Log.Error(ex, "Exception while running command: {Program} {Args}", program, args);
-				return new ProcessResult 
-				{ 
-					ExitCode = -1, 
-					Error = $"Exception: {ex.Message}" 
+				return new ProcessResult
+				{
+					ExitCode = -1,
+					Error = $"Exception: {ex.Message}"
 				};
 			}
 		}
@@ -217,7 +217,7 @@ namespace Anytime_Anywhere_NAS.Services
 		{
 			Log.Information("Checking for Docker installation");
 			var result = await RunCommandAsync("docker", "--version");
-			
+
 			if (result.IsSuccess)
 			{
 				Log.Information("Docker is installed. Version: {Output}", result.Output.Trim());
@@ -226,7 +226,7 @@ namespace Anytime_Anywhere_NAS.Services
 			{
 				Log.Warning("Docker is not installed. Error: {Error}", result.Error);
 			}
-			
+
 			return result;
 		}
 
@@ -247,17 +247,17 @@ namespace Anytime_Anywhere_NAS.Services
 			return result;
 		}
 
-		public async Task WriteComposeFileAsync(string storagePath, string shareName)
+		public async Task WriteComposeFileAsync(string storagePath, string shareName, double cpuLimit, double memoryLimitGB)
 		{
-			Log.Information("Writing docker-compose file. StoragePath={StoragePath}, ShareName={ShareName}", 
-				storagePath, shareName);
-			
+			Log.Information("Writing docker-compose file. StoragePath={StoragePath}, ShareName={ShareName}, CPU={CpuLimit}, RAM={MemoryLimitGB}",
+				storagePath, shareName, cpuLimit, memoryLimitGB);
+
 			try
 			{
 				string dockerPath = storagePath.Replace("\\", "/");
-				
+
 				Log.Debug("Normalized path for Docker: {DockerPath}", dockerPath);
-				
+
 				string fileContent = $@"
 services:
   samba:
@@ -270,7 +270,9 @@ services:
       - ""{dockerPath}:/share""
     command: -s ""{shareName};/share;yes;no;yes;all""
     restart: always
-"; // update the rules and access for the nas
+    cpus: ""{cpuLimit:0.0}""
+    mem_limit: ""{memoryLimitGB:0.0}G""
+"; //TODO: update the rules and access for the nas
 				await File.WriteAllTextAsync("docker-compose.yml", fileContent);
 				Log.Information("docker-compose.yml file written successfully");
 			}
@@ -285,17 +287,17 @@ services:
 		{
 			Log.Information("Starting NAS (docker-compose up)");
 			var result = await RunCommandAsync("docker", "compose up -d");
-			
+
 			if (result.IsSuccess)
 			{
 				Log.Information("NAS started successfully");
 			}
 			else
 			{
-				Log.Error("Failed to start NAS. ExitCode={ExitCode}, Error={Error}", 
+				Log.Error("Failed to start NAS. ExitCode={ExitCode}, Error={Error}",
 					result.ExitCode, result.Error);
 			}
-			
+
 			return result;
 		}
 
@@ -303,26 +305,26 @@ services:
 		{
 			Log.Information("Stopping NAS (docker-compose down)");
 			var result = await RunCommandAsync("docker", "compose down");
-			
+
 			if (result.IsSuccess)
 			{
 				Log.Information("NAS stopped successfully");
 			}
 			else
 			{
-				Log.Error("Failed to stop NAS. ExitCode={ExitCode}, Error={Error}", 
+				Log.Error("Failed to stop NAS. ExitCode={ExitCode}, Error={Error}",
 					result.ExitCode, result.Error);
 			}
-			
+
 			return result;
 		}
 
 		public async Task<ProcessResult> InstallDockerAsync()
 		{
 			Log.Information("Starting Docker installation process");
-			
+
 			var platform = GetOperatingSystem();
-			
+
 			if (platform == OSPlatform.Windows)
 			{
 				return await InstallDockerOnWindowsAsync();
@@ -341,26 +343,26 @@ services:
 		private async Task<ProcessResult> InstallDockerOnWindowsAsync()
 		{
 			Log.Information("Installing Docker Desktop on Windows");
-			
+
 			Log.Information("Attempting installation via winget");
 			var wingetResult = await RunCommandAsync("winget", "install -e --id Docker.DockerDesktop --accept-package-agreements --accept-source-agreements");
-			
+
 			if (wingetResult.IsSuccess)
 			{
 				Log.Information("Docker Desktop installed successfully via winget");
 				return wingetResult;
 			}
-			
+
 			Log.Warning("Winget installation failed, attempting chocolatey");
-			
+
 			var chocoResult = await RunCommandAsync("choco", "install docker-desktop -y");
-			
+
 			if (chocoResult.IsSuccess)
 			{
 				Log.Information("Docker Desktop installed successfully via chocolatey");
 				return chocoResult;
 			}
-			
+
 			Log.Error("Failed to install Docker Desktop automatically");
 			return new ProcessResult
 			{
@@ -372,7 +374,7 @@ services:
 		public void StartDockerDesktop()
 		{
 			Log.Information("Attempting to start Docker Desktop application...");
-			
+
 			string dockerExePath = @"C:\Program Files\Docker\Docker\Docker Desktop.exe";
 
 			if (!File.Exists(dockerExePath))
@@ -389,7 +391,7 @@ services:
 					UseShellExecute = true,
 					WindowStyle = ProcessWindowStyle.Hidden
 				};
-				
+
 				Process.Start(startInfo);
 				Log.Information("Docker Desktop application started successfully");
 			}

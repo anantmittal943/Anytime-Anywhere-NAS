@@ -98,6 +98,20 @@
 			<Setter Property="Opacity" Value="0.6"/>
 		</Style>
 		
+		<Style Selector="Button.copy">
+			<Setter Property="Background" Value="#607D8B"/>
+			<Setter Property="Foreground" Value="White"/>
+			<Setter Property="Padding" Value="8,4"/>
+			<Setter Property="CornerRadius" Value="4"/>
+			<Setter Property="FontSize" Value="11"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="Cursor" Value="Hand"/>
+		</Style>
+		
+		<Style Selector="Button.copy:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#455A64"/>
+		</Style>
+		
 		<Style Selector="Border.card">
 			<Setter Property="Background" Value="White"/>
 			<Setter Property="CornerRadius" Value="12"/>
@@ -141,7 +155,14 @@
 			<!-- Status Card -->
 			<Border Classes="card">
 				<StackPanel Spacing="12">
-					<TextBlock Text="System Status" Classes="label"/>
+					<Grid ColumnDefinitions="*,Auto">
+						<TextBlock Text="System Status" Classes="label" Grid.Column="0"/>
+						<Button Content="Copy" 
+								Click="OnCopyStatusClick"
+								Classes="copy"
+								Grid.Column="1"
+								VerticalAlignment="Center"/>
+					</Grid>
 					<Border Background="#F0F4F8" 
 							CornerRadius="8" 
 							Padding="16">

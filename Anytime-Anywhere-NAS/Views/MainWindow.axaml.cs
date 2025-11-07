@@ -1,5 +1,6 @@
 using Anytime_Anywhere_NAS.ViewModels;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Serilog;
@@ -32,15 +33,16 @@ namespace Anytime_Anywhere_NAS.Views
 			{
 				var storageProvider = this.StorageProvider;
 				
+				// Get suggested start location (user's home folder or documents)
 				IStorageFolder? suggestedStartLocation = null;
 				try
 				{
-					suggestedStartLocation = await storageProvider.TryGetWellKnownFolderAsync(WellKnownFolder.Downloads);
-					Log.Debug("Using Downloads folder as suggested start location");
+					suggestedStartLocation = await storageProvider.TryGetWellKnownFolderAsync(WellKnownFolder.Documents);
+					Log.Debug("Using Documents folder as suggested start location");
 				}
 				catch (Exception ex)
 				{
-					Log.Warning(ex, "Could not get Downloads folder, using default location");
+					Log.Warning(ex, "Could not get Documents folder, using default location");
 				}
 
 				var options = new FolderPickerOpenOptions
@@ -56,6 +58,7 @@ namespace Anytime_Anywhere_NAS.Views
 				{
 					var folder = result[0];
 					
+					// Try to get the local path
 					if (folder.TryGetLocalPath() is { } localPath)
 					{
 						viewModel.SetSelectedFolder(localPath);
@@ -63,6 +66,7 @@ namespace Anytime_Anywhere_NAS.Views
 					}
 					else
 					{
+						// Fallback to Path.LocalPath if TryGetLocalPath returns null
 						var path = folder.Path.LocalPath;
 						if (!string.IsNullOrEmpty(path))
 						{
@@ -85,6 +89,49 @@ namespace Anytime_Anywhere_NAS.Views
 			{
 				Log.Error(ex, "Error occurred while opening folder picker");
 				viewModel?.SetSelectedFolder($"Error: {ex.Message}");
+			}
+		}
+
+		private async void OnCopyStatusClick(object sender, RoutedEventArgs e)
+		{
+			Log.Debug("Copy status button clicked");
+			
+			var viewModel = this.DataContext as MainWindowViewModel;
+			if (viewModel == null)
+			{
+				Log.Warning("DataContext is not MainWindowViewModel");
+				return;
+			}
+
+			try
+			{
+				var clipboard = this.Clipboard;
+				if (clipboard != null)
+				{
+					await clipboard.SetTextAsync(viewModel.NasStatus);
+					Log.Information("Status copied to clipboard: {Status}", viewModel.NasStatus);
+					
+					// Visual feedback - change button text briefly
+					if (sender is Button button)
+					{
+						var originalContent = button.Content;
+						button.Content = "Copied!";
+						button.Background = Avalonia.Media.Brushes.Green;
+						
+						// Reset after 1.5 seconds
+						await Task.Delay(1500);
+						button.Content = originalContent;
+						button.Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#607D8B"));
+					}
+				}
+				else
+				{
+					Log.Warning("Clipboard is not available");
+				}
+			}
+			catch (Exception ex)
+			{
+				Log.Error(ex, "Error copying status to clipboard");
 			}
 		}
 	}
