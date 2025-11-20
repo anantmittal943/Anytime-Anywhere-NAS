@@ -26,10 +26,61 @@ Your app is just a user-friendly GUI that automatically configures and manages t
 
 * **Non-Destructive:** Does not format drives or uninstall your OS. It just shares a folder you pick.
 * **Cross-Platform:** A single C# codebase for **Windows** and **Linux** desktops, built with Avalonia UI.
-* **Smart Setup:** Automatically scans your system specs (RAM, CPU) to recommend a "NAS Profile" and allocates resources safely.
-* **Safe Management:** Gracefully stop and resume your NAS service at any time without data corruption.
-* **Resilient:** Automatically restarts on system boot and is protected from sudden power outages by your laptop's built-in battery.
-* **Flexible:** Easily change which folder you are sharing or update resource limits from the app.
+* **One-Click Install:** On Windows, the app can install Docker for you if it's not detected.
+* **Smart Resource Management:** Safely allocates a small portion of your CPU and RAM to the NAS.
+* **Remembers Your Settings:** Automatically saves and reloads your last used folder path.
+* **Resilient:** Your laptop's built-in battery acts as a free Uninterruptible Power Supply (UPS).
+
+## Getting Started
+
+### Prerequisites
+
+#### Windows (10 or 11)
+1.  **.NET 8 Desktop Runtime**: [Download and install the x64 runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0/runtime?os=windows&arch=x64).
+2.  **Docker Desktop**: The app can attempt to install this for you. However, for a smoother experience, it's recommended to [install it manually from the official website](https://www.docker.com/products/docker-desktop/).
+    *   Ensure Docker Desktop is running before you start the app.
+
+#### Linux
+1.  **.NET 8 Runtime**: Follow the official Microsoft instructions to [install the .NET runtime for your distribution](https://learn.microsoft.com/en-us/dotnet/core/install/linux).
+2.  **Docker Engine**: Install Docker for your distribution. You can find instructions on the [official Docker website](https://docs.docker.com/engine/install/).
+    *   After installing, you must add your user to the `docker` group to avoid permission errors:
+        ```bash
+        sudo usermod -aG docker $USER
+        ```
+    *   **Important**: You must log out and log back in for this change to take effect.
+
+### Installation
+1.  Go to the [**Releases** page](https://github.com/anantmittal943/Anytime-Anywhere-NAS/releases) of this repository.
+2.  Download the latest version for your operating system.
+3.  Unzip the folder and run the `Anytime-Anywhere-NAS` executable.
+
+## How to Use
+1.  **Launch the application.** It will immediately check your system for Docker.
+2.  **Click "Select Folder"** to choose the folder you want to share on your network.
+3.  **Click "Start NAS".** The app will configure and start the Samba container.
+4.  **Access your share!** On another computer on the same network, open File Explorer (Windows) or your file manager (Linux/macOS) and go to:
+    ```
+    \\<YOUR_LAPTOP_IP_ADDRESS>\MyNasShare
+    ```
+    You can find your laptop's local IP address in your system's network settings.
+
+## Troubleshooting
+
+### Windows Keeps Asking for a Password
+This application configures the share for guest access, but modern versions of Windows disable insecure guest logons by default for security reasons.
+
+If you are prompted for a password, you can either:
+1.  Enter any username (e.g., "guest") with no password.
+2.  If that fails, you may need to enable insecure guest logons on the **client machine** (the one trying to access the share).
+    *   Press `Win + R`, type `gpedit.msc`, and press Enter.
+    *   Navigate to: `Computer Configuration > Administrative Templates > Network > Lanman Workstation`.
+    *   Find the "Enable insecure guest logons" policy, double-click it, select **Enabled**, and click OK.
+
+### "Docker permission denied" on Linux
+If you see a status message about permission being denied, it means your user account is not part of the `docker` group.
+*   Run `sudo usermod -aG docker $USER` in a terminal.
+*   **Log out and log back in.** This step is mandatory.
+*   Restart the application.
 
 ## Project Status
 
