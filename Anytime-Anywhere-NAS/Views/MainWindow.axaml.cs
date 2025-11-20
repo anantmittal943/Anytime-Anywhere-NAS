@@ -32,17 +32,32 @@ namespace Anytime_Anywhere_NAS.Views
 			try
 			{
 				var storageProvider = this.StorageProvider;
-				
-				// Get suggested start location (user's home folder or documents)
 				IStorageFolder? suggestedStartLocation = null;
-				try
+				string lastPath = viewModel.SelectedFolderPath;
+				if (!string.IsNullOrWhiteSpace(lastPath) && System.IO.Directory.Exists(lastPath))
 				{
-					suggestedStartLocation = await storageProvider.TryGetWellKnownFolderAsync(WellKnownFolder.Documents);
-					Log.Debug("Using Documents folder as suggested start location");
+					try
+					{
+						Log.Debug("Attempting to use last selected folder as start location: {Path}", lastPath);
+						suggestedStartLocation = await storageProvider.TryGetFolderFromPathAsync(new Uri(lastPath));
+					}
+					catch (Exception ex)
+					{
+						Log.Warning("Failed to restore last path, falling back. Error: {Message}", ex.Message);
+					}
 				}
-				catch (Exception ex)
+
+				if (suggestedStartLocation == null)
 				{
-					Log.Warning(ex, "Could not get Documents folder, using default location");
+					try
+					{
+						suggestedStartLocation = await storageProvider.TryGetWellKnownFolderAsync(WellKnownFolder.Documents);
+						Log.Debug("Using Documents folder as suggested start location");
+					}
+					catch (Exception ex)
+					{
+						Log.Warning(ex, "Could not get Documents folder, using default location");
+					}
 				}
 
 				var options = new FolderPickerOpenOptions
@@ -58,7 +73,6 @@ namespace Anytime_Anywhere_NAS.Views
 				{
 					var folder = result[0];
 					
-					// Try to get the local path
 					if (folder.TryGetLocalPath() is { } localPath)
 					{
 						viewModel.SetSelectedFolder(localPath);
@@ -66,7 +80,6 @@ namespace Anytime_Anywhere_NAS.Views
 					}
 					else
 					{
-						// Fallback to Path.LocalPath if TryGetLocalPath returns null
 						var path = folder.Path.LocalPath;
 						if (!string.IsNullOrEmpty(path))
 						{
@@ -111,14 +124,12 @@ namespace Anytime_Anywhere_NAS.Views
 					await clipboard.SetTextAsync(viewModel.NasStatus);
 					Log.Information("Status copied to clipboard: {Status}", viewModel.NasStatus);
 					
-					// Visual feedback - change button text briefly
 					if (sender is Button button)
 					{
 						var originalContent = button.Content;
 						button.Content = "Copied!";
 						button.Background = Avalonia.Media.Brushes.Green;
 						
-						// Reset after 1.5 seconds
 						await Task.Delay(1500);
 						button.Content = originalContent;
 						button.Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#607D8B"));

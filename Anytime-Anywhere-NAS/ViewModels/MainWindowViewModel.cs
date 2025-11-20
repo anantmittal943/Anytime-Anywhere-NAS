@@ -28,6 +28,11 @@ namespace Anytime_Anywhere_NAS.ViewModels
 			{
 				Log.Information("Selected folder path changed to: {Path}", value);
 				this.RaiseAndSetIfChanged(ref _selectedFolderPath, value);
+
+				if (!value.StartsWith("Error") && !value.Contains("No folder selected"))
+				{
+					SettingsService.Save(new AppSettings { LastSelectedPath = value });
+				}
 			}
 		}
 
@@ -92,15 +97,15 @@ namespace Anytime_Anywhere_NAS.ViewModels
 			IsWindows = platform == OSPlatform.Windows;
 
 			var canInstallDocker = this.WhenAnyValue(
-				x => x.IsDockerInstalled, 
+				x => x.IsDockerInstalled,
 				x => x.IsWindows,
 				(installed, windows) => !installed && windows);
-			
+
 			var canStart = this.WhenAnyValue(
-				x => x.IsNasRunning, 
+				x => x.IsNasRunning,
 				x => x.IsDockerInstalled,
 				(isRunning, dockerInstalled) => !isRunning && dockerInstalled);
-			
+
 			var canStop = this.WhenAnyValue(x => x.IsNasRunning);
 
 			InstallDockerCommand = ReactiveCommand.CreateFromTask(InstallDockerAsync, canInstallDocker);
@@ -111,6 +116,13 @@ namespace Anytime_Anywhere_NAS.ViewModels
 			_ = CheckDockerStatusAsync();
 
 			Log.Information("MainWindowViewModel initialized successfully");
+
+			var settings = SettingsService.Load();
+			if (!string.IsNullOrWhiteSpace(settings.LastSelectedPath) && Directory.Exists(settings.LastSelectedPath))
+			{
+				SelectedFolderPath = settings.LastSelectedPath;
+				Log.Information("Restored last used folder: {Path}", SelectedFolderPath);
+			}
 		}
 
 		private async Task LoadSystemInfoAsync()
@@ -142,7 +154,7 @@ namespace Anytime_Anywhere_NAS.ViewModels
 			{
 				var dockerCheckResult = await _nasService.CheckForDockerAsync();
 				IsDockerInstalled = dockerCheckResult.IsSuccess;
-				
+
 				if (IsDockerInstalled)
 				{
 					NasStatus = "Docker is installed. Ready to start NAS.";
@@ -187,9 +199,9 @@ namespace Anytime_Anywhere_NAS.ViewModels
 			try
 			{
 				NasStatus = "Installing Docker... This may take several minutes.";
-				
+
 				var result = await _nasService.InstallDockerAsync();
-				
+
 				if (result.IsSuccess)
 				{
 					IsDockerInstalled = true;
@@ -218,7 +230,7 @@ namespace Anytime_Anywhere_NAS.ViewModels
 
 				var dockerCheckResult = await _nasService.CheckDockerRunningAsync();
 				bool dockerAvailable = dockerCheckResult.IsSuccess;
-				
+
 				if (!dockerAvailable)
 				{
 					if (IsLinux && dockerCheckResult.Error.Contains("permission denied", StringComparison.OrdinalIgnoreCase))
@@ -231,33 +243,33 @@ namespace Anytime_Anywhere_NAS.ViewModels
 						Log.Error("3. Restart this application.");
 						Log.Error("The group changes only take effect after you log back in!");
 						Log.Error("----------------------------------------");
-						
+
 						NasStatus = "Error: Docker permission denied. Check logs for fix instructions.";
 						IsDockerInstalled = false;
 						return;
 					}
-					
+
 					if (IsWindows)
 					{
 						Log.Warning("Docker engine is not running. Attempting to start Docker Desktop...");
 						NasStatus = "Docker not running... Starting Docker Desktop. Please wait 30 seconds.";
-						
+
 						try
 						{
 							_nasService.StartDockerDesktop();
-							
+
 							await Task.Delay(30000);
-							
+
 							dockerCheckResult = await _nasService.CheckDockerRunningAsync();
 							dockerAvailable = dockerCheckResult.IsSuccess;
-							
+
 							if (!dockerAvailable)
 							{
 								NasStatus = "Error: Docker Desktop started but failed to connect. Please check Docker Desktop.";
 								Log.Error("Failed to connect to Docker after starting Docker Desktop");
 								return;
 							}
-							
+
 							Log.Information("Docker Desktop started successfully and engine is now running");
 							NasStatus = "Docker started successfully. Continuing...";
 						}

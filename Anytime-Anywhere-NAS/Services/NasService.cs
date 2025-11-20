@@ -257,7 +257,8 @@ namespace Anytime_Anywhere_NAS.Services
 				string dockerPath = storagePath.Replace("\\", "/");
 
 				Log.Debug("Normalized path for Docker: {DockerPath}", dockerPath);
-
+				//command: -p -s ""{shareName};/share;yes;no;yes;nobody""
+				//TODO: update the rules and access for the nas
 				string fileContent = $@"
 services:
   samba:
@@ -272,7 +273,7 @@ services:
     restart: always
     cpus: ""{cpuLimit:0.0}""
     mem_limit: ""{memoryLimitGB:0.0}G""
-"; //TODO: update the rules and access for the nas
+";
 				await File.WriteAllTextAsync("docker-compose.yml", fileContent);
 				Log.Information("docker-compose.yml file written successfully");
 			}
