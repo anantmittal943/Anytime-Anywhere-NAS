@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Serilog;
 using System;
 using System.Linq;
@@ -12,10 +13,66 @@ namespace Anytime_Anywhere_NAS.Views
 {
     public partial class MainWindow : Window
     {
+        private bool _hasScrolledToConnection = false;
+
         public MainWindow()
         {
             InitializeComponent();
             Log.Information("MainWindow initialized");
+
+            // Subscribe to IsNasRunning changes to trigger auto-scroll
+            var viewModel = this.DataContext as MainWindowViewModel;
+            if (viewModel != null)
+            {
+                viewModel.PropertyChanged += ViewModel_PropertyChanged;
+            }
+        }
+
+        private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(MainWindowViewModel.IsNasRunning))
+            {
+                var viewModel = sender as MainWindowViewModel;
+                if (viewModel != null && viewModel.IsNasRunning && !_hasScrolledToConnection)
+                {
+                    _hasScrolledToConnection = true;
+                    _ = ScrollToConnectionInfoAsync();
+                }
+                else if (viewModel != null && !viewModel.IsNasRunning)
+                {
+                    _hasScrolledToConnection = false;
+                }
+            }
+        }
+
+        private async Task ScrollToConnectionInfoAsync()
+        {
+            Log.Information("Auto-scrolling to connection info box");
+
+            // Wait a bit for the UI to fully render the connection box
+            await Task.Delay(300);
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                try
+                {
+                    var scrollViewer = this.FindControl<ScrollViewer>("MainScrollViewer");
+                    if (scrollViewer != null)
+                    {
+                        // Scroll to the bottom smoothly
+                        scrollViewer.ScrollToEnd();
+                        Log.Information("Scrolled to bottom successfully");
+                    }
+                    else
+                    {
+                        Log.Warning("MainScrollViewer not found");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Error scrolling to connection info");
+                }
+            });
         }
 
 		private async void OnSelectFolderClick(object sender, RoutedEventArgs e)
@@ -143,6 +200,50 @@ namespace Anytime_Anywhere_NAS.Views
 			catch (Exception ex)
 			{
 				Log.Error(ex, "Error copying status to clipboard");
+			}
+		}
+
+		private async void OnCopyUrlClick(object sender, RoutedEventArgs e)
+		{
+			Log.Debug("Copy URL button clicked");
+			
+			var viewModel = this.DataContext as MainWindowViewModel;
+			if (viewModel == null)
+			{
+				Log.Warning("DataContext is not MainWindowViewModel");
+				return;
+			}
+
+			try
+			{
+				var clipboard = this.Clipboard;
+				if (clipboard != null)
+				{
+					await clipboard.SetTextAsync(viewModel.ConnectionUrl);
+					Log.Information("URL copied to clipboard: {Url}", viewModel.ConnectionUrl);
+					
+					if (sender is Button button)
+					{
+						var originalContent = button.Content;
+						button.Content = "Copied!";
+						button.Background = Avalonia.Media.Brushes.Green;
+						button.Foreground = Avalonia.Media.Brushes.White;
+						
+						await Task.Delay(1500);
+						
+						button.Content = originalContent;
+						button.Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#2196F3"));
+						button.Foreground = Avalonia.Media.Brushes.White;
+					}
+				}
+				else
+				{
+					Log.Warning("Clipboard is not available");
+				}
+			}
+			catch (Exception ex)
+			{
+				Log.Error(ex, "Error copying URL to clipboard");
 			}
 		}
 	}

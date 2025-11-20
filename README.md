@@ -13,7 +13,7 @@ It's a "control panel" that lets you take any folder on your laptop and safely s
 * Creating a central media folder for smart TVs.
 * Sharing project files between your computers.
 
-## How it Works (The Magic) ??
+## How it Works (The Magic)
 
 This app **does not** erase your operating system. Instead, it uses **Docker** to run a lightweight, isolated Linux container that manages your file sharing (Samba) service.
 

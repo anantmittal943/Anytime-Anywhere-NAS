@@ -6,6 +6,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Management;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -287,6 +290,31 @@ services:
 		public async Task<ProcessResult> StartNasAsync()
 		{
 			Log.Information("Starting NAS (docker-compose up)");
+
+			// First check if the container already exists
+			var checkResult = await RunCommandAsync("docker", "ps -a --filter name=my-simple-nas --format {{.Names}}");
+			
+			if (checkResult.IsSuccess && checkResult.Output.Contains("my-simple-nas"))
+			{
+				Log.Information("Container 'my-simple-nas' already exists. Checking its state...");
+				
+				// Check if it's running
+				var runningCheck = await RunCommandAsync("docker", "ps --filter name=my-simple-nas --format {{.Names}}");
+				
+				if (runningCheck.IsSuccess && runningCheck.Output.Contains("my-simple-nas"))
+				{
+					Log.Information("Container is already running. Restarting to apply new configuration...");
+					await RunCommandAsync("docker", "stop my-simple-nas");
+					await RunCommandAsync("docker", "rm my-simple-nas");
+				}
+				else
+				{
+					Log.Information("Container exists but is not running. Removing old container...");
+					await RunCommandAsync("docker", "rm my-simple-nas");
+				}
+			}
+
+			// Now start with docker-compose
 			var result = await RunCommandAsync("docker", "compose up -d");
 
 			if (result.IsSuccess)
@@ -401,6 +429,62 @@ services:
 				Log.Error(ex, "Failed to start Docker Desktop application");
 				throw;
 			}
+		}
+
+		public string GetLocalIpAddress()
+		{
+			Log.Information("Detecting local IP address");
+			try
+			{
+				// Get all network interfaces
+				var interfaces = NetworkInterface.GetAllNetworkInterfaces();
+
+				// logic to find the best match
+				foreach (var network in interfaces)
+				{
+					// Skip adapters that are down, loopback (127.0.0.1), or virtual (Docker/WSL)
+					if (network.OperationalStatus != OperationalStatus.Up || 
+						network.NetworkInterfaceType == NetworkInterfaceType.Loopback ||
+						network.Description.ToLower().Contains("virtual") ||
+						network.Description.ToLower().Contains("hyper-v") ||
+						network.Description.ToLower().Contains("wsl") || 
+						network.Name.ToLower().Contains("docker") || 
+						network.Name.ToLower().Contains("vethernet"))
+					{
+						continue;
+					}
+
+					// We prioritize Ethernet and Wi-Fi
+					if (network.NetworkInterfaceType == NetworkInterfaceType.Ethernet || 
+						network.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
+					{
+						var properties = network.GetIPProperties();
+
+						// We look for a gateway. Real networks usually have a gateway (router). 
+						// Virtual ones often don't.
+						if (properties.GatewayAddresses.Count == 0) continue;
+
+						foreach (var address in properties.UnicastAddresses)
+						{
+							// We only want IPv4 (192.168.x.x), not IPv6
+							if (address.Address.AddressFamily == AddressFamily.InterNetwork)
+							{
+								Log.Information("Found local IP: {IP} on interface {Name} ({Type})", 
+									address.Address, network.Name, network.NetworkInterfaceType);
+								
+								return address.Address.ToString();
+							}
+						}
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Log.Error(ex, "Error identifying local IP address");
+			}
+
+			Log.Warning("Could not detect local IP, falling back to localhost");
+			return "127.0.0.1"; // Fallback to localhost if nothing found
 		}
 	}
 }

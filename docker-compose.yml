@@ -1,0 +1,14 @@
+
+services:
+  samba:
+    image: dperson/samba
+    container_name: my-simple-nas
+    ports:
+      - "139:139"
+      - "445:445"
+    volumes:
+      - "D:/NAS_SHARE:/share"
+    command: -s "MyNasShare;/share;yes;no;yes;all"
+    restart: always
+    cpus: "2.0"
+    mem_limit: "3.0G"

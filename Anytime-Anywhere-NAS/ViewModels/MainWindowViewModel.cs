@@ -86,6 +86,20 @@ namespace Anytime_Anywhere_NAS.ViewModels
 		public ReactiveCommand<Unit, Unit> StartNasCommand { get; }
 		public ReactiveCommand<Unit, Unit> StopNasCommand { get; }
 
+		private string _connectionUrl = "Waiting for NAS to start...";
+		public string ConnectionUrl
+		{
+			get => _connectionUrl;
+			set => this.RaiseAndSetIfChanged(ref _connectionUrl, value);
+		}
+
+		private string _networkType = "";
+		public string NetworkType
+		{
+			get => _networkType;
+			set => this.RaiseAndSetIfChanged(ref _networkType, value);
+		}
+
 		public MainWindowViewModel()
 		{
 			Log.Information("Initializing MainWindowViewModel");
@@ -330,6 +344,11 @@ namespace Anytime_Anywhere_NAS.ViewModels
 					IsNasRunning = true;
 					NasStatus = "NAS is RUNNING.";
 					Log.Information("NAS started successfully");
+
+					// Generate connection URL
+					string localIp = _nasService.GetLocalIpAddress();
+					ConnectionUrl = $@"\\{localIp}\MyNasShare";
+					Log.Information("Generated Connection URL: {Url}", ConnectionUrl);
 				}
 				else
 				{

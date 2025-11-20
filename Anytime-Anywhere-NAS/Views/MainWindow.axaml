@@ -138,7 +138,7 @@
 		</Style>
 	</Window.Styles>
 
-	<ScrollViewer>
+	<ScrollViewer x:Name="MainScrollViewer">
 		<StackPanel Spacing="20" Margin="40" MaxWidth="800">
 
 			<!-- Header Section -->
@@ -167,9 +167,9 @@
 							CornerRadius="8" 
 							Padding="16">
 						<TextBlock Text="{Binding NasStatus}" 
-								   FontSize="14"
+								FontSize="14"
 								   TextWrapping="Wrap"
-								   Foreground="#1A1A1A"/>
+								 Foreground="#1A1A1A"/>
 					</Border>
 				</StackPanel>
 			</Border>
@@ -181,7 +181,7 @@
 					IsVisible="{Binding !IsDockerInstalled}">
 				<StackPanel Spacing="16">
 					<StackPanel Spacing="8">
-						<TextBlock Text="? Docker Required" 
+						<TextBlock Text="Docker Required" 
 								   FontSize="20" 
 								   FontWeight="Bold" 
 								   HorizontalAlignment="Center"
@@ -203,7 +203,7 @@
 					<StackPanel Spacing="12" IsVisible="{Binding IsLinux}">
 						<TextBlock Text="Installation Instructions" 
 								   FontWeight="Bold" 
-								   FontSize="16"
+								 FontSize="16"
 								   Foreground="#333333"
 								   TextWrapping="Wrap"/>
 						
@@ -225,7 +225,7 @@
 								<TextBlock Text="Fedora/RHEL/CentOS:" FontWeight="SemiBold" Foreground="#F57C00"/>
 								<Border Background="White" CornerRadius="4" Padding="12">
 									<TextBlock Text="sudo dnf install docker docker-compose" 
-											   FontFamily="Consolas" 
+											FontFamily="Consolas" 
 											   FontSize="12"/>
 								</Border>
 							</StackPanel>
@@ -346,12 +346,68 @@
 				</StackPanel>
 			</Border>
 
+			<!-- Connection Info Box -->
+			<Border x:Name="ConnectionInfoBox"
+					BorderBrush="#2196F3" 
+					BorderThickness="2" 
+					CornerRadius="12" 
+					Padding="20" 
+					IsVisible="{Binding IsNasRunning}" 
+					Background="#E3F2FD"
+					Classes="card">
+				<StackPanel Spacing="12">
+					<TextBlock Text="Connect from other devices" 
+							   FontWeight="Bold" 
+							   Foreground="#1565C0"
+							   FontSize="16"/>
+					<TextBlock Text="Copy this link and paste it into File Explorer on any PC:" 
+							   FontSize="13" 
+							   Foreground="#424242"
+							   TextWrapping="Wrap"/>
+					
+					<Grid ColumnDefinitions="*,Auto">
+						<!-- The URL Text -->
+						<TextBox Grid.Column="0" 
+								 Text="{Binding ConnectionUrl}" 
+								 IsReadOnly="True" 
+								 VerticalAlignment="Center"
+								 FontFamily="Consolas"
+								 FontSize="14"
+								 FontWeight="SemiBold"
+								 Background="White"
+								 Padding="12"/>
+						
+						<!-- The Copy Button -->
+						<Button Grid.Column="1" 
+								Margin="8,0,0,0" 
+								Click="OnCopyUrlClick"
+								Classes="secondary"
+								VerticalAlignment="Stretch">
+							<TextBlock Text="Copy" FontSize="13"/>
+						</Button>
+					</Grid>
+					
+					<Border Background="#BBDEFB" 
+							CornerRadius="6" 
+							Padding="12"
+							BorderBrush="#1976D2"
+							BorderThickness="1">
+						<TextBlock TextWrapping="Wrap" 
+								 FontSize="12" 
+								   Foreground="#0D47A1">
+							<Run Text="Tip: " FontWeight="Bold"/>
+							<Run Text="Press Win+R on Windows, paste the link, and press Enter. On Mac, press Cmd+K in Finder and paste the link."/>
+						</TextBlock>
+					</Border>
+				</StackPanel>
+			</Border>
+
 			<!-- Footer -->
 			<TextBlock Text="Made with love for easy file sharing" 
 					   HorizontalAlignment="Center"
 					   FontSize="12"
 					   Foreground="#999999"
-					   Margin="0,10,0,20"/>
+					 Margin="0,10,0,20"/>
 
 		</StackPanel>
 	</ScrollViewer>
